@@ -1,0 +1,3 @@
+[submodule "Mimir"]
+	path = Mimir
+	url = git@github.com:planetarium/mimir.git
