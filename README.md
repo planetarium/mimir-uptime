@@ -13,4 +13,3 @@ If you're actively running Mimir and want to monitor its data integrity, simply 
 ## Notifications and Sync Check
 
 - **Slack Notifications**: Slack notifications are configured to alert you in case of a test failure.
-- **Sync Gap Check**: The system also verifies the sync state between Mimir and the blockchain. If the block sync lags behind by a set number of blocks, it triggers a failure, indicating a potential synchronization issue.
