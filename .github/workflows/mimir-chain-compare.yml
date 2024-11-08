@@ -11,9 +11,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: /
 
     steps:
       - name: Checkout
@@ -25,7 +22,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - run: dotnet test
+      - run: dotnet test mimir-uptime.sln
 
     #   - name: Notify Slack
     #     if: failure()
