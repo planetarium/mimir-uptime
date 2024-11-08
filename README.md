@@ -13,3 +13,14 @@ If you're actively running Mimir and want to monitor its data integrity, simply 
 ## Notifications and Sync Check
 
 - **Slack Notifications**: Slack notifications are configured to alert you in case of a test failure.
+
+## Current Collections Tested
+The tests cover the following collections:
+
+- action_point
+- agent
+- avatar
+- daily_reward
+- ~~inventory~~ (disabled)
+- stake
+- world_information
