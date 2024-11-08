@@ -3,6 +3,8 @@ using HeadlessGQL;
 using Lib9c.Models.States;
 using Libplanet.Crypto;
 using Microsoft.Extensions.DependencyInjection;
+using Mimir.MongoDB;
+using Mimir.MongoDB.Bson;
 using MimirGQL;
 using Nekoyume;
 
@@ -23,8 +25,14 @@ public class DailyRewardTests : IClassFixture<GraphQLClientFixture>
     [InlineData("0xAD509326770e7EB2a44ffe6Ef4116AdEA7877114")]
     public async Task CompareDailyRewardDataFromDifferentServices_ShouldMatch(string address)
     {
+        var metadata = await mimirClient.GetMetadata.ExecuteAsync(
+            CollectionNames.GetCollectionName<DailyRewardDocument>()
+        );
         var dailyRewardDataFromMimir = await GetMimirDailyRewardData(new Address(address));
-        var dailyRewardDataFromHeadless = await GetHeadlessDailyRewardData(new Address(address));
+        var dailyRewardDataFromHeadless = await GetHeadlessDailyRewardData(
+            metadata.Data.Metadata.LatestBlockIndex,
+            new Address(address)
+        );
 
         Assert.Equal(dailyRewardDataFromMimir, dailyRewardDataFromHeadless);
     }
@@ -37,14 +45,14 @@ public class DailyRewardTests : IClassFixture<GraphQLClientFixture>
         return dailyRewardData;
     }
 
-    public async Task<long> GetHeadlessDailyRewardData(Address address)
+    public async Task<long> GetHeadlessDailyRewardData(long blockIndex, Address address)
     {
         var stateResponse = await headlessClient.GetState.ExecuteAsync(
             Addresses.DailyReward.ToString(),
-            address.ToString()
+            address.ToString(),
+            blockIndex
         );
         var result = CodecUtil.DecodeState(stateResponse.Data.State);
-        return (Integer) result;
+        return (Integer)result;
     }
-
 }

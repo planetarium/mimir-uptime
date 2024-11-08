@@ -4,6 +4,8 @@ using Lib9c.Models.States;
 using Libplanet.Action.State;
 using Libplanet.Crypto;
 using Microsoft.Extensions.DependencyInjection;
+using Mimir.MongoDB;
+using Mimir.MongoDB.Bson;
 using MimirGQL;
 
 namespace MimirUptime;
@@ -22,12 +24,18 @@ public class StakeTests : IClassFixture<GraphQLClientFixture>
     [Theory]
     [InlineData("0x08eB36BB2B46073149fE9DaCB9706d2b49Fa6115")]
     [InlineData("0x2EB4c1C19E5664feC2eb722FB01df6eBdf5014e2")]
-    public async Task CompareStakeDataFromDifferentServices_ShouldMatch(string address)
+    public async Task CompareStakeData(string address)
     {
+        var metadata = await mimirClient.GetMetadata.ExecuteAsync(
+            CollectionNames.GetCollectionName<StakeDocument>()
+        );
         var agentDataFromMimir = await GetMimirStakeData(new Address(address));
 
         var stakeAddress = Nekoyume.Model.State.StakeState.DeriveAddress(new Address(address));
-        var agentDataFromHeadless = await GetHeadlessStakeData(stakeAddress);
+        var agentDataFromHeadless = await GetHeadlessStakeData(
+            metadata.Data.Metadata.LatestBlockIndex,
+            stakeAddress
+        );
         if (agentDataFromMimir == null)
         {
             // FIXME; if agentDataFromMimir is null, stakeAddress should be null as well, but now it isn't
@@ -45,11 +53,12 @@ public class StakeTests : IClassFixture<GraphQLClientFixture>
         return agentData;
     }
 
-    private async Task<StakeState?> GetHeadlessStakeData(Address address)
+    private async Task<StakeState?> GetHeadlessStakeData(long blockIndex, Address address)
     {
         var stateResponse = await headlessClient.GetState.ExecuteAsync(
             ReservedAddresses.LegacyAccount.ToString(),
-            address.ToString()
+            address.ToString(),
+            blockIndex
         );
         var result = CodecUtil.DecodeState(stateResponse.Data.State);
         if (result.Kind == ValueKind.Null)

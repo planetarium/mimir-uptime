@@ -60,3 +60,11 @@ query GetStake($agentAddress: Address!) {
     startedBlockIndex
   }
 }
+
+query GetMetadata($collectionName: String!){
+  metadata(collectionName: $collectionName) {
+    collectionName
+    latestBlockIndex
+    pollerType
+  }
+}

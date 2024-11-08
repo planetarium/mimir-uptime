@@ -4,6 +4,8 @@ using Lib9c.Models.Extensions;
 using Lib9c.Models.States;
 using Libplanet.Crypto;
 using Microsoft.Extensions.DependencyInjection;
+using Mimir.MongoDB;
+using Mimir.MongoDB.Bson;
 using MimirGQL;
 using Nekoyume;
 
@@ -24,32 +26,40 @@ public class ActionPointTests : IClassFixture<GraphQLClientFixture>
     [InlineData("9bFA9196e93E8186A22757c367b92c74F7B0BeA3")]
     public async Task CompareActionPointData(string address)
     {
+        var metadata = await mimirClient.GetMetadata.ExecuteAsync(
+            CollectionNames.GetCollectionName<ActionPointDocument>()
+        );
         var actionPointDataFromMimir = await GetMimirActionPointData(new Address(address));
-        var actionPointDataFromHeadless = await GetHeadlessActionPointData(new Address(address));
+        var actionPointDataFromHeadless = await GetHeadlessActionPointData(
+            metadata.Data.Metadata.LatestBlockIndex,
+            new Address(address)
+        );
 
         Assert.Equal(actionPointDataFromMimir, actionPointDataFromHeadless);
     }
 
     public async Task<int> GetMimirActionPointData(Address avatarAddress)
     {
-        var actionPointResponse = await mimirClient.GetActionPoint.ExecuteAsync(avatarAddress.ToString());
+        var actionPointResponse = await mimirClient.GetActionPoint.ExecuteAsync(
+            avatarAddress.ToString()
+        );
         var actionPointData = actionPointResponse.Data.ActionPoint;
 
         return actionPointData;
     }
 
-    public async Task<int> GetHeadlessActionPointData(Address avatarAddress)
+    public async Task<int> GetHeadlessActionPointData(long blockIndex, Address avatarAddress)
     {
         var stateResponse = await headlessClient.GetState.ExecuteAsync(
             Addresses.ActionPoint.ToString(),
-            avatarAddress.ToString()
+            avatarAddress.ToString(),
+            blockIndex
         );
         var result = CodecUtil.DecodeState(stateResponse.Data.State);
 
         if (result is not Integer value)
-            throw new Exception(
-            );
-            
+            throw new Exception();
+
         return value;
     }
 }

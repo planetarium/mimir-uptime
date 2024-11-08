@@ -1,3 +1,3 @@
-query GetState($accountAddress: Address! $address: Address!) {
-    state(accountAddress: $accountAddress, address: $address)
+query GetState($accountAddress: Address! $address: Address!, $index: Long!) {
+    state(accountAddress: $accountAddress, address: $address, index: $index)
 }
