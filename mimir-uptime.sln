@@ -5,6 +5,12 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MimirUptime", "MimirUptime\MimirUptime.csproj", "{F315A60B-77F1-456F-A9E2-B8A3CE4DBF81}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mimir", "Mimir", "{54185307-7D5D-4D32-9076-9392F6A6967C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lib9c.Models", "Mimir\Lib9c.Models\Lib9c.Models.csproj", "{F4ADE362-4488-4597-B106-7699046155CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mimir.MongoDB", "Mimir\Mimir.MongoDB\Mimir.MongoDB.csproj", "{CE9EA662-F0C9-4264-AA13-7800CE312A87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,11 +21,23 @@ Global
 		{F315A60B-77F1-456F-A9E2-B8A3CE4DBF81}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F315A60B-77F1-456F-A9E2-B8A3CE4DBF81}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F315A60B-77F1-456F-A9E2-B8A3CE4DBF81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4ADE362-4488-4597-B106-7699046155CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4ADE362-4488-4597-B106-7699046155CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4ADE362-4488-4597-B106-7699046155CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4ADE362-4488-4597-B106-7699046155CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE9EA662-F0C9-4264-AA13-7800CE312A87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE9EA662-F0C9-4264-AA13-7800CE312A87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE9EA662-F0C9-4264-AA13-7800CE312A87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE9EA662-F0C9-4264-AA13-7800CE312A87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B605F0B2-3A04-4FFB-AFFE-D71863EA6CDE}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F4ADE362-4488-4597-B106-7699046155CC} = {54185307-7D5D-4D32-9076-9392F6A6967C}
+		{CE9EA662-F0C9-4264-AA13-7800CE312A87} = {54185307-7D5D-4D32-9076-9392F6A6967C}
 	EndGlobalSection
 EndGlobal
