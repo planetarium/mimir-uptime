@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron:  '5 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -25,11 +25,11 @@ jobs:
       - run: dotnet restore mimir-uptime.sln
       - run: dotnet test mimir-uptime.sln
 
-    #   - name: Notify Slack
-    #     if: failure()
-    #     uses: 8398a7/action-slack@v3
-    #     with:
-    #       status: ${{ job.status }}
-    #       fields: repo,message,commit,action,eventName,ref,workflow,job,took
-    #     env:
-    #       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Notify Slack
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
