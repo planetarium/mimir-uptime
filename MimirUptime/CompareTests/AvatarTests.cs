@@ -7,7 +7,7 @@ using Mimir.MongoDB.Bson;
 using MimirGQL;
 using Nekoyume;
 
-namespace MimirUptime;
+namespace MimirUptime.CompareTests;
 
 public class AvatarTests : IClassFixture<GraphQLClientFixture>
 {

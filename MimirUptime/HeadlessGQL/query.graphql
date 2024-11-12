@@ -1,3 +1,11 @@
 query GetState($accountAddress: Address! $address: Address!, $index: Long!) {
     state(accountAddress: $accountAddress, address: $address, index: $index)
 }
+
+query GetTip {
+    nodeStatus {
+        tip {
+            index
+        }
+    }
+}
