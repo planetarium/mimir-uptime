@@ -8,7 +8,7 @@ using Mimir.MongoDB;
 using Mimir.MongoDB.Bson;
 using MimirGQL;
 
-namespace MimirUptime;
+namespace MimirUptime.CompareTests;
 
 public class StakeTests : IClassFixture<GraphQLClientFixture>
 {
