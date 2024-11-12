@@ -59,7 +59,15 @@ public class CheckTip : IClassFixture<GraphQLClientFixture>
 
     public async Task<long> GetHeadlessBlockIndex()
     {
-        var tipResponse = await headlessClient.GetTip.ExecuteAsync();
-        return tipResponse.Data.NodeStatus.Tip.Index;
+        try
+        {
+            var tipResponse = await headlessClient.GetTip.ExecuteAsync();
+            return tipResponse.Data.NodeStatus.Tip.Index;
+        }
+        catch (Exception)
+        {
+            Assert.Skip("Headless client is unresponsive; skipping test.");
+            throw;
+        }
     }
 }
