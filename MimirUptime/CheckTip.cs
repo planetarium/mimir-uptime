@@ -45,7 +45,13 @@ public class CheckTip : IClassFixture<GraphQLClientFixture>
 
             var blockIndexFromMimir = await GetMimirMetadata(collectionName);
 
-            Assert.True(blockIndexFromMimir + 10 >= blockIndexFromHeadless);
+            var blockDifference = blockIndexFromHeadless - blockIndexFromMimir;
+
+            Assert.True(
+                blockDifference <= 10,
+                $"Collection '{collectionName}' has a block difference of {blockDifference}. "
+                    + $"Mimir block index: {blockIndexFromMimir}, Headless block index: {blockIndexFromHeadless}"
+            );
         }
     }
 
