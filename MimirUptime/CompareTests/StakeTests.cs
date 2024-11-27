@@ -23,7 +23,7 @@ public class StakeTests : IClassFixture<GraphQLClientFixture>
 
     [Theory]
     [InlineData("0x08eB36BB2B46073149fE9DaCB9706d2b49Fa6115")]
-    [InlineData("0x2EB4c1C19E5664feC2eb722FB01df6eBdf5014e2")]
+    [InlineData("0x17c30886E68A18EB7fF57a5e8Fa981b47FB1C5bC")]
     public async Task CompareStakeData(string address)
     {
         var metadata = await mimirClient.GetMetadata.ExecuteAsync(
