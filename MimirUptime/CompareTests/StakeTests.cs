@@ -31,7 +31,7 @@ public class StakeTests : IClassFixture<GraphQLClientFixture>
         );
         var agentDataFromMimir = await GetMimirStakeData(new Address(address));
 
-        var stakeAddress = Nekoyume.Model.State.StakeState.DeriveAddress(new Address(address));
+        var stakeAddress = Nekoyume.Model.Stake.StakeState.DeriveAddress(new Address(address));
         var agentDataFromHeadless = await GetHeadlessStakeData(
             metadata.Data.Metadata.LatestBlockIndex,
             stakeAddress
