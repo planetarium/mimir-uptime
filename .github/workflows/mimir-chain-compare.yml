@@ -22,8 +22,48 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Download Failure Count
+        uses: actions/download-artifact@v3
+        with:
+          name: failure_count
+        continue-on-error: true
+
+      - name: Initialize Failure Count
+        run: |
+          if [ ! -f failure_count ]; then
+            echo 0 > failure_count
+          fi
+
       - run: dotnet restore mimir-uptime.sln
       - run: dotnet test mimir-uptime.sln
+
+      - name: Record Failure
+        if: failure()
+        run: |
+          COUNT=$(cat failure_count || echo 0)
+          echo $((COUNT + 1)) > failure_count
+          echo "Failure count: $((COUNT + 1))"
+
+      - name: Reset Failure Count
+        if: success()
+        run: echo 0 > failure_count
+
+      - name: Check Failure Threshold
+        if: failure()
+        run: |
+          COUNT=$(cat failure_count || echo 0)
+          if [ "$COUNT" -ge 3 ]; then
+            curl -X POST -H "Content-Type: application/json" \
+            -d '{"routing_key": "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}", "event_action": "trigger", "payload": {"summary": "GitHub Actions Workflow Failure", "severity": "critical", "source": "GitHub Actions"}}' \
+            https://events.pagerduty.com/v2/enqueue
+            echo 0 > failure_count
+          fi
+
+      - name: Upload Failure Count
+        uses: actions/upload-artifact@v3
+        with:
+          name: failure_count
+          path: failure_count
 
       - name: Notify Slack
         if: failure()
