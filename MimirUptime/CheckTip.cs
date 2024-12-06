@@ -30,6 +30,7 @@ public class CheckTip : IClassFixture<GraphQLClientFixture>
     [Fact]
     public async Task CheckGapMimirAndHeadless()
     {
+        Assert.True(false);
         var blockIndexFromHeadless = await GetHeadlessBlockIndex();
 
         foreach (
