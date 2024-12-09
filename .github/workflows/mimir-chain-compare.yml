@@ -50,17 +50,46 @@ jobs:
           jq ".failure_count = $NEW_COUNT" failure_count.json > tmp.json && mv tmp.json failure_count.json
           echo "Updated failure count to $NEW_COUNT"
 
+      - name: Trigger PagerDuty Alert on 3 Consecutive Failures
+        if: failure()
+        env:
+          PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+        run: |
+          COUNT=$(jq '.failure_count' failure_count.json)
+          if [ "$COUNT" -ge 3 ]; then
+            curl --request POST \
+              --url 'https://events.pagerduty.com/v2/enqueue' \
+              --header 'Content-Type: application/json' \
+              --data '{
+                "payload": {
+                  "summary": "GitHub Actions Workflow Failed 3 Times Consecutively",
+                  "severity": "critical",
+                  "source": "GitHub Actions Workflow"
+                },
+                "routing_key": "'"$PAGERDUTY_INTEGRATION_KEY"'",
+                "event_action": "trigger"
+              }'
+            echo "PagerDuty alert triggered due to 3 consecutive failures."
+          else
+            echo "Failure count is $COUNT, no PagerDuty alert triggered."
+          fi
+          
       - name: Reset Failure Count on Success
         if: success()
         run: |
           jq ".failure_count = 0" failure_count.json > tmp.json && mv tmp.json failure_count.json
           echo "Failure count reset to 0"
 
-      - name: Commit Failure Count Changes
+      - name: Commit Failure Count Changes If Needed
         if: always()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add failure_count.json
-          git commit -m "Update failure count [skip ci]" || echo "No changes to commit"
-          git push
+          if ! git diff --quiet failure_count.json; then
+            git add failure_count.json
+            git commit -m "Update failure count [skip ci]"
+            git push
+            echo "Changes committed."
+          else
+            echo "No changes to commit."
+          fi
