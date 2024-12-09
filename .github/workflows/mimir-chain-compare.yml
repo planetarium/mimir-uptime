@@ -24,7 +24,13 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+  
       - name: Initialize Failure Count File
         run: |
           if [ ! -f failure_count.json ]; then
