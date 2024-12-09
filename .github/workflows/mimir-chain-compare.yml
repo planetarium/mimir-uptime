@@ -30,41 +30,40 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-  
-      - name: Initialize Failure Count File
-        run: |
-          if [ ! -f failure_count.json ]; then
-            echo '{"failure_count": 0}' > failure_count.json
-          fi
 
-      - run: dotnet restore mimir-uptime.sln
-      - run: dotnet test mimir-uptime.sln
-    
+      - name: Fetch Failure Count from GitHub Pages
+        run: |
+          URL="https://planetarium.github.io/mimir-uptime/failure_count/failure_count.json"
+          mkdir -p failure_count
+          curl -f $URL -o failure_count/failure_count.json || echo '{"failure_count": 0}' > failure_count/failure_count.json
+          echo "Fetched failure count:"
+          cat failure_count/failure_count.json
+
+      - name: Run Tests
+        run: |
+          dotnet restore mimir-uptime.sln
+          dotnet test mimir-uptime.sln
+
       - name: Update Failure Count on Failure
         if: failure()
         run: |
-          COUNT=$(jq '.failure_count' failure_count.json)
+          COUNT=$(jq '.failure_count' failure_count/failure_count.json)
           NEW_COUNT=$((COUNT + 1))
-          jq ".failure_count = $NEW_COUNT" failure_count.json > tmp.json && mv tmp.json failure_count.json
+          jq ".failure_count = $NEW_COUNT" failure_count/failure_count.json > tmp.json && mv tmp.json failure_count/failure_count.json
           echo "Updated failure count to $NEW_COUNT"
 
       - name: Reset Failure Count on Success
         if: success()
         run: |
-          jq ".failure_count = 0" failure_count.json > tmp.json && mv tmp.json failure_count.json
+          jq ".failure_count = 0" failure_count/failure_count.json > tmp.json && mv tmp.json failure_count/failure_count.json
           echo "Failure count reset to 0"
 
-      - name: Prepare Artifact Directory
-        run: |
-          mkdir -p artifact
-          mv failure_count.json artifact/
-        
-      - name: Upload Artifact
+      - name: Upload Failure Count to Artifact
         if: always()
         uses: actions/upload-pages-artifact@v1
         with:
-          path: artifact
+          path: failure_count
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy Failure Count to GitHub Pages
         if: always()
         uses: actions/deploy-pages@v4
