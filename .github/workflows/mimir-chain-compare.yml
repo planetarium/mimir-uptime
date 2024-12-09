@@ -54,11 +54,16 @@ jobs:
           jq ".failure_count = 0" failure_count.json > tmp.json && mv tmp.json failure_count.json
           echo "Failure count reset to 0"
 
+      - name: Prepare Artifact Directory
+        run: |
+          mkdir -p artifact
+          mv failure_count.json artifact/
+        
       - name: Upload Artifact
         if: always()
         uses: actions/upload-pages-artifact@v1
         with:
-          path: failure_count.json
+          path: artifact
 
       - name: Deploy to GitHub Pages
         if: always()
