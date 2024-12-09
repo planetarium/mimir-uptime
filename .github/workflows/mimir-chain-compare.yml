@@ -64,6 +64,11 @@ jobs:
         with:
           path: failure_count
 
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Deploy Failure Count to GitHub Pages
         if: always()
         uses: actions/deploy-pages@v4
