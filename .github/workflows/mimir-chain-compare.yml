@@ -9,12 +9,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: "pages"
+  group: "failure-count"
   cancel-in-progress: false
 
 jobs:
@@ -31,13 +29,13 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Fetch Failure Count from GitHub Pages
+      - name: Fetch Failure Count from Repository
         run: |
-          URL="https://planetarium.github.io/mimir-uptime/failure_count/failure_count.json"
-          mkdir -p failure_count
-          curl -f $URL -o failure_count/failure_count.json || echo '{"failure_count": 0}' > failure_count/failure_count.json
-          echo "Fetched failure count:"
-          cat failure_count/failure_count.json
+          if [ ! -f failure_count.json ]; then
+            echo '{"failure_count": 0}' > failure_count.json
+          fi
+          echo "Current failure count:"
+          cat failure_count.json
 
       - name: Run Tests
         run: |
@@ -47,28 +45,22 @@ jobs:
       - name: Update Failure Count on Failure
         if: failure()
         run: |
-          COUNT=$(jq '.failure_count' failure_count/failure_count.json)
+          COUNT=$(jq '.failure_count' failure_count.json)
           NEW_COUNT=$((COUNT + 1))
-          jq ".failure_count = $NEW_COUNT" failure_count/failure_count.json > tmp.json && mv tmp.json failure_count/failure_count.json
+          jq ".failure_count = $NEW_COUNT" failure_count.json > tmp.json && mv tmp.json failure_count.json
           echo "Updated failure count to $NEW_COUNT"
 
       - name: Reset Failure Count on Success
         if: success()
         run: |
-          jq ".failure_count = 0" failure_count/failure_count.json > tmp.json && mv tmp.json failure_count/failure_count.json
+          jq ".failure_count = 0" failure_count.json > tmp.json && mv tmp.json failure_count.json
           echo "Failure count reset to 0"
 
-      - name: Upload Failure Count to Artifact
+      - name: Commit Failure Count Changes
         if: always()
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: failure_count
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy Failure Count to GitHub Pages
-        if: always()
-        uses: actions/deploy-pages@v4
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add failure_count.json
+          git commit -m "Update failure count [skip ci]" || echo "No changes to commit"
+          git push
