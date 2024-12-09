@@ -55,15 +55,11 @@ jobs:
           echo "Failure count reset to 0"
 
       - name: Upload Artifact
+        if: always()
         uses: actions/upload-pages-artifact@v1
         with:
           path: failure_count.json
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Deploy to GitHub Pages
         if: always()
         uses: actions/deploy-pages@v4
