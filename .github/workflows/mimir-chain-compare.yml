@@ -1,75 +1,62 @@
-name: Run compare tests
+name: Manage Failure Count
 
 on:
   push:
     branches:
       - main
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: "*/10 * * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Download Failure Count
-        uses: actions/download-artifact@v3
-        with:
-          name: failure_count
-        continue-on-error: true
-
-      - name: Initialize Failure Count
+      - name: Initialize Failure Count File
         run: |
-          if [ ! -f failure_count ]; then
-            echo 0 > failure_count
+          if [ ! -f failure_count.json ]; then
+            echo '{"failure_count": 0}' > failure_count.json
           fi
 
       - run: dotnet restore mimir-uptime.sln
       - run: dotnet test mimir-uptime.sln
-
-      - name: Record Failure
+    
+      - name: Update Failure Count on Failure
         if: failure()
         run: |
-          COUNT=$(cat failure_count || echo 0)
-          echo $((COUNT + 1)) > failure_count
-          echo "Failure count: $((COUNT + 1))"
+          COUNT=$(jq '.failure_count' failure_count.json)
+          NEW_COUNT=$((COUNT + 1))
+          jq ".failure_count = $NEW_COUNT" failure_count.json > tmp.json && mv tmp.json failure_count.json
+          echo "Updated failure count to $NEW_COUNT"
 
-      - name: Reset Failure Count
+      - name: Reset Failure Count on Success
         if: success()
-        run: echo 0 > failure_count
-
-      - name: Check Failure Threshold
-        if: failure()
         run: |
-          COUNT=$(cat failure_count || echo 0)
-          if [ "$COUNT" -ge 3 ]; then
-            curl -X POST -H "Content-Type: application/json" \
-            -d '{"routing_key": "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}", "event_action": "trigger", "payload": {"summary": "GitHub Actions Workflow Failure", "severity": "critical", "source": "GitHub Actions"}}' \
-            https://events.pagerduty.com/v2/enqueue
-            echo 0 > failure_count
-          fi
+          jq ".failure_count = 0" failure_count.json > tmp.json && mv tmp.json failure_count.json
+          echo "Failure count reset to 0"
 
-      - name: Upload Failure Count
-        uses: actions/upload-artifact@v3
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          name: failure_count
-          path: failure_count
+          path: failure_count.json
 
-      - name: Notify Slack
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,action,eventName,ref,workflow,job,took
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
