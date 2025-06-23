@@ -7,29 +7,19 @@ using MimirGQL;
 
 namespace MimirUptime;
 
-public class CheckTip : IClassFixture<GraphQLClientFixture>
+public class CheckTip : IClassFixture<HeadlessOptionsFixture>
 {
-    private readonly IMimirClient mimirClient;
-    private readonly IHeadlessClient headlessClient;
-    private List<string> excludeCollectionNames = new List<string>();
+    private readonly HeadlessOptionsFixture _fixture;
 
-    public CheckTip(GraphQLClientFixture fixture)
+    public BlockTimestampTests(HeadlessOptionsFixture fixture)
     {
-        mimirClient = fixture.ServiceProvider.GetRequiredService<IMimirClient>();
-        headlessClient = fixture.ServiceProvider.GetRequiredService<IHeadlessClient>();
-
-        excludeCollectionNames.Add(CollectionNames.GetCollectionName<InventoryDocument>());
-        excludeCollectionNames.Add(CollectionNames.GetCollectionName<MetadataDocument>());
-        excludeCollectionNames.Add(
-            CollectionNames.GetCollectionName(
-                CollectionNames.GetAccountAddress(Currencies.DailyRewardRune)
-            )
-        );
+        _fixture = fixture;
     }
 
     [Fact]
     public async Task CheckGapMimirAndHeadless()
     {
+
         var blockIndexFromHeadless = await GetHeadlessBlockIndex();
 
         foreach (
