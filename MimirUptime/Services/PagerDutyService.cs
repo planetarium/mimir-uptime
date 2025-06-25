@@ -4,9 +4,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using NodeUptime.Options;
+using MimirUptime.Options;
 
-namespace NodeUptime.Services
+namespace MimirUptime.Services
 {
     public class PagerDutyService
     {
@@ -20,37 +20,32 @@ namespace NodeUptime.Services
             _options = options.Value;
         }
 
-        public async Task<bool> SendAlertAsync(
-            string headlessKey,
-            string routingKey,
-            string errorMessage
-        )
+        public async Task<bool> SendAlertAsync(string headlessKey, string errorMessage)
         {
-            if (!_options.Enabled || !_options.RoutingKeys.ContainsKey(routingKey))
+            if (!_options.Enabled)
             {
                 return false;
             }
 
             try
             {
-                var pagerdutyRoutingKey = _options.RoutingKeys[routingKey];
                 var payload = new
                 {
-                    routing_key = pagerdutyRoutingKey,
+                    routing_key = _options.RoutingKey,
                     event_action = "trigger",
-                    dedup_key = $"nodeuptime-{headlessKey}",
+                    dedup_key = $"mimiruptime-{headlessKey}",
                     payload = new
                     {
                         summary = $"FAILURE for test {headlessKey}",
-                        source = "NodeUptime Tests",
+                        source = "MimirUptime Tests",
                         severity = "critical",
                         component = headlessKey,
                         custom_details = new
                         {
                             error_message = errorMessage,
-                            timestamp = DateTime.UtcNow.ToString("o")
-                        }
-                    }
+                            timestamp = DateTime.UtcNow.ToString("o"),
+                        },
+                    },
                 };
 
                 var jsonContent = JsonSerializer.Serialize(payload);
@@ -65,37 +60,32 @@ namespace NodeUptime.Services
             }
         }
 
-        public async Task<bool> ResolveAlertAsync(
-            string headlessKey,
-            string routingKey,
-            string resolveMessage
-        )
+        public async Task<bool> ResolveAlertAsync(string headlessKey, string resolveMessage)
         {
-            if (!_options.Enabled || !_options.RoutingKeys.ContainsKey(routingKey))
+            if (!_options.Enabled)
             {
                 return false;
             }
 
             try
             {
-                var pagerdutyRoutingKey = _options.RoutingKeys[routingKey];
                 var payload = new
                 {
-                    routing_key = pagerdutyRoutingKey,
+                    routing_key = _options.RoutingKey,
                     event_action = "resolve",
-                    dedup_key = $"nodeuptime-{headlessKey}",
+                    dedup_key = $"mimiruptime-{headlessKey}",
                     payload = new
                     {
                         summary = $"RESOLVED for test {headlessKey}",
-                        source = "NodeUptime Tests",
+                        source = "MimirUptime Tests",
                         component = headlessKey,
                         severity = "critical",
                         custom_details = new
                         {
                             message = resolveMessage,
-                            timestamp = DateTime.UtcNow.ToString("o")
-                        }
-                    }
+                            timestamp = DateTime.UtcNow.ToString("o"),
+                        },
+                    },
                 };
 
                 var jsonContent = JsonSerializer.Serialize(payload);

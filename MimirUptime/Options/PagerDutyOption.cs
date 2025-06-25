@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NodeUptime.Options
+namespace MimirUptime.Options
 {
     public class PagerDutyOption
     {

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Mimir.MongoDB;
+using Mimir.MongoDB.Bson;
 
-namespace NodeUptime
+namespace MimirUptime
 {
     public static class Constants
     {

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace NodeUptime.Client;
+namespace MimirUptime.Client;
 
 public class GraphQLRequest
 {
@@ -36,28 +36,4 @@ public class Tip
 {
     [JsonPropertyName("index")]
     public long Index { get; set; }
-}
-
-public class ChainQueryResponse
-{
-    [JsonPropertyName("chainQuery")]
-    public ChainQuery? ChainQuery { get; set; }
-}
-
-public class ChainQuery
-{
-    [JsonPropertyName("blockQuery")]
-    public BlockQuery? BlockQuery { get; set; }
-}
-
-public class BlockQuery
-{
-    [JsonPropertyName("blocks")]
-    public List<Block>? Blocks { get; set; }
-}
-
-public class Block
-{
-    [JsonPropertyName("timestamp")]
-    public string? Timestamp { get; set; }
 }

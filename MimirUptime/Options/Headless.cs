@@ -1,13 +1,16 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
-namespace NodeUptime.Options
+namespace MimirUptime.Options
 {
     public class HeadlessOption
     {
         public const string SectionName = "Headless";
 
-        public string JwtIssuer { get; init; }
+        [Required]
+        public string JwtIssuer { get; set; } = string.Empty;
 
-        public string JwtSecretKey { get; init; }
+        [Required]
+        public string JwtSecretKey { get; set; } = string.Empty;
     }
 }

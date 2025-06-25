@@ -2,10 +2,10 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using NodeUptime.Options;
-using NodeUptime.Services;
+using MimirUptime.Options;
+using MimirUptime.Services;
 
-namespace NodeUptime
+namespace MimirUptime
 {
     public class HeadlessOptionsFixture
     {

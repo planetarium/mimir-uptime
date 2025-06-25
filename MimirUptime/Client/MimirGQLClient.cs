@@ -1,225 +1,97 @@
-using GraphQL;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.Newtonsoft;
-using MimirUptime.Client.Models;
-using Polly;
-using Serilog;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MimirUptime.Client
 {
     public class MimirGQLClient
     {
-        private readonly GraphQLHttpClient _client;
+        public const string GetMetadataQuery =
+            @"
+            query aef($collectionName: String!){
+                metadata(collectionName: $collectionName) {
+                    collectionName
+                    latestBlockIndex
+                    pollerType
+                }
+            }
+            ";
 
-        public MimirGQLClient(string url)
+        public class GetMetadataResponse
         {
-            _client = new GraphQLHttpClient(url, new NewtonsoftJsonSerializer());
+            [JsonPropertyName("metadata")]
+            public required Metadata Metadata { get; set; }
         }
 
-        public async Task<T> Request<T>(GraphQLRequest request, CancellationToken token)
+        public class Metadata
         {
-            var response = await Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(5,
-                    retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (exception, timeSpan, retryCount, context) =>
-                    {
-                        Log.Warning(
-                            "Request failed with {Message}. Retrying in {TimeSpan}. {RetryCount} / 5",
-                            exception.Message, timeSpan, retryCount);
-                    })
-                .ExecuteAsync(async () => await _client.SendQueryAsync<T>(request, token));
+            [JsonPropertyName("collectionName")]
+            public required string collectionName { get; set; }
 
-            if (response.Errors != null && response.Errors.Any())
+            [JsonPropertyName("latestBlockIndex")]
+            public required long latestBlockIndex { get; set; }
+
+            [JsonPropertyName("pollerType")]
+            public required string pollerType { get; set; }
+        }
+
+        private readonly HttpClient _httpClient;
+        private readonly Uri _url;
+
+        public MimirGQLClient(Uri url)
+        {
+            _httpClient = new HttpClient();
+            _url = url;
+
+            _httpClient.Timeout = TimeSpan.FromSeconds(5);
+        }
+
+        private async Task<(T response, string jsonResponse)> PostGraphQLRequestAsync<T>(
+            string query,
+            object? variables,
+            CancellationToken stoppingToken = default
+        )
+        {
+            var request = new GraphQLRequest { Query = query, Variables = variables };
+            var jsonRequest = JsonSerializer.Serialize(request);
+            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _url)
             {
-                var errors = string.Join(", ", response.Errors.Select(e => e.Message));
-                throw new Exception($"GQL error: {errors}");
+                Content = content,
+            };
+
+            var response = await _httpClient.SendAsync(httpRequest, stoppingToken);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync(stoppingToken);
+            var graphQLResponse = JsonSerializer.Deserialize<GraphQLResponse<T>>(jsonResponse);
+
+            if (
+                graphQLResponse is null
+                || graphQLResponse.Data is null
+                || graphQLResponse.Errors is not null
+            )
+            {
+                throw new HttpRequestException("Response data is null.");
             }
 
-            if (response.Data == null)
-            {
-                throw new Exception("GQL error: response data is null.");
-            }
-
-            return response.Data;
+            return (graphQLResponse.Data, jsonResponse);
         }
 
-        public async Task<ActionPoint> GetActionPoint(string avatarAddress, CancellationToken token)
+        public async Task<(GetMetadataResponse response, string jsonResponse)> GetMetadataAsync(
+            string key,
+            CancellationToken stoppingToken = default
+        )
         {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.ActionPointQuery,
-                OperationName = "actionPoint",
-                Variables = new { avatarAddress }
-            };
-
-            var response = await Request<ActionPointResponse>(request, token);
-            return response.ActionPoint;
+            return await PostGraphQLRequestAsync<GetMetadataResponse>(
+                GetMetadataQuery,
+                new { collectionName = key },
+                stoppingToken
+            );
         }
-
-        public async Task<Agent> GetAgent(string agentAddress, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.AgentQuery,
-                OperationName = "agent",
-                Variables = new { agentAddress }
-            };
-
-            var response = await Request<AgentResponse>(request, token);
-            return response.Agent;
-        }
-
-        public async Task<Avatar> GetAvatar(string avatarAddress, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.AvatarQuery,
-                OperationName = "avatar",
-                Variables = new { avatarAddress }
-            };
-
-            var response = await Request<AvatarResponse>(request, token);
-            return response.Avatar;
-        }
-
-        public async Task<List<Avatar>> GetAvatars(string agentAddress, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.AvatarsQuery,
-                OperationName = "avatars",
-                Variables = new { agentAddress }
-            };
-
-            var response = await Request<AvatarsResponse>(request, token);
-            return response.Avatars;
-        }
-
-        public async Task<DailyRewardState> GetDailyRewardState(string agentAddress, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.DailyRewardStateQuery,
-                OperationName = "dailyRewardState",
-                Variables = new { agentAddress }
-            };
-            
-            var response = await Request<DailyRewardStateResponse>(request, token);
-            return response.DailyRewardState;
-        }
-
-        public async Task<Inventory> GetInventory(string agentAddress, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.InventoryQuery,
-                OperationName = "inventory",
-                Variables = new { agentAddress }
-            };
-            
-            var response = await Request<InventoryResponse>(request, token);
-            return response.Inventory;
-        }
-        
-        public async Task<StakeInfo> GetStakeState(string staker, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.StakeStateQuery,
-                OperationName = "stakeState",
-                Variables = new { staker }
-            };
-            
-            var response = await Request<StakeStateResponse>(request, token);
-            return response.StakeState;
-        }
-        
-        public async Task<WorldInformation> GetWorldInformation(CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.WorldInformationQuery,
-                OperationName = "worldInformation"
-            };
-            
-            var response = await Request<WorldInformationResponse>(request, token);
-            return response.WorldInformation;
-        }
-        
-        public async Task<long> GetNextArenaTicketChargeOffset(CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.NextArenaTicketChargeOffsetQuery,
-                OperationName = "nextArenaTicketChargeOffset"
-            };
-            
-            var response = await Request<NextArenaTicketChargeOffsetResponse>(request, token);
-            return response.NextArenaTicketChargeOffset;
-        }
-        
-        public async Task<ArenaState> GetArenaState(string avatarAddress, CancellationToken token)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = Queries.ArenaStateQuery,
-                OperationName = "arenaState",
-                Variables = new { avatarAddress }
-            };
-            
-            var response = await Request<ArenaStateResponse>(request, token);
-            return response.ArenaState;
-        }
-    }
-
-    public class ActionPointResponse
-    {
-        public ActionPoint ActionPoint { get; set; }
-    }
-
-    public class AgentResponse
-    {
-        public Agent Agent { get; set; }
-    }
-
-    public class AvatarResponse
-    {
-        public Avatar Avatar { get; set; }
-    }
-
-    public class AvatarsResponse
-    {
-        public List<Avatar> Avatars { get; set; }
-    }
-
-    public class DailyRewardStateResponse
-    {
-        public DailyRewardState DailyRewardState { get; set; }
-    }
-    
-    public class InventoryResponse
-    {
-        public Inventory Inventory { get; set; }
-    }
-    
-    public class StakeStateResponse
-    {
-        public StakeInfo StakeState { get; set; }
-    }
-    
-    public class WorldInformationResponse
-    {
-        public WorldInformation WorldInformation { get; set; }
-    }
-
-    public class NextArenaTicketChargeOffsetResponse
-    {
-        public long NextArenaTicketChargeOffset { get; set; }
-    }
-    
-    public class ArenaStateResponse
-    {
-        public ArenaState ArenaState { get; set; }
     }
 }

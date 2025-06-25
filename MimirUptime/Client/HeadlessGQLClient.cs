@@ -4,15 +4,24 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
-namespace NodeUptime.Client;
+namespace MimirUptime.Client;
 
 public class HeadlessGQLClient
 {
+    public const string GetTipQuery =
+        @"
+            query nodeStatus {
+                nodeStatus {
+                    tip {
+                        index
+                    }
+                }
+            }";
     private readonly HttpClient _httpClient;
     private readonly Uri _url;
     private readonly string? _issuer;
     private readonly string? _secret;
-    private const int RetryAttempts = 36;
+    private const int RetryAttempts = 3;
     private const int DelayInSeconds = 5;
 
     public HeadlessGQLClient(Uri url, string? issuer, string? secret)
@@ -56,7 +65,7 @@ public class HeadlessGQLClient
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _url)
                 {
-                    Content = content
+                    Content = content,
                 };
 
                 if (_secret is not null && _issuer is not null)
@@ -72,6 +81,7 @@ public class HeadlessGQLClient
                 response.EnsureSuccessStatusCode();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync(stoppingToken);
+                Console.WriteLine($"GraphQL Response: {jsonResponse}");
                 var graphQLResponse = JsonSerializer.Deserialize<GraphQLResponse<T>>(jsonResponse);
 
                 if (
@@ -80,7 +90,7 @@ public class HeadlessGQLClient
                     || graphQLResponse.Errors is not null
                 )
                 {
-                    throw new HttpRequestException("Response data is null.");
+                    throw new HttpRequestException($"Response data is null. Response: {jsonResponse}");
                 }
 
                 return (graphQLResponse.Data, jsonResponse);
@@ -94,14 +104,10 @@ public class HeadlessGQLClient
         throw new HttpRequestException("All attempts to request the GraphQL endpoint failed.");
     }
 
-    public async Task<(ChainQueryResponse response, string jsonResponse)> GetBlockTimestampAsync(
+    public async Task<(GetTipResponse response, string jsonResponse)> GetTipAsync(
         CancellationToken stoppingToken = default
     )
     {
-        return await PostGraphQLRequestAsync<ChainQueryResponse>(
-            GraphQLQueries.GetBlockTimestamp,
-            null,
-            stoppingToken
-        );
+        return await PostGraphQLRequestAsync<GetTipResponse>(GetTipQuery, null, stoppingToken);
     }
 }

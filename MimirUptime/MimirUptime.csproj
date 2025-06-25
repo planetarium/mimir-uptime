@@ -1,43 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="StrawberryShake.Server" Version="14.0.0" />
-  </ItemGroup>
-
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content
+      Include="appsettings.local.json"
+      CopyToOutputDirectory="PreserveNewest"
+      Condition="Exists('appsettings.local.json')"
+    />
   </ItemGroup>
-
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference
+      Include="Microsoft.Extensions.Configuration.EnvironmentVariables"
+      Version="8.0.0"
+    />
+    <PackageReference
+      Include="Microsoft.Extensions.Options.ConfigurationExtensions"
+      Version="8.0.0"
+    />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit.v3" Version="0.6.0-pre.7" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.0.0-pre.49" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
   </ItemGroup>
-
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-  
   <ItemGroup>
     <ProjectReference Include="..\Mimir\Lib9c.Models\Lib9c.Models.csproj" />
     <ProjectReference Include="..\Mimir\Mimir.MongoDB\Mimir.MongoDB.csproj" />
   </ItemGroup>
-
 </Project>
