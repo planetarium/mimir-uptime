@@ -61,6 +61,13 @@ namespace MimirUptime.TipTests
                             + $"Mimir block index: {blockIndexFromMimir}, Headless block index: {blockIndexFromHeadless}"
                     );
                 }
+
+                var resolveMessage =
+                    $"Block timestamp for {headlessKey} is now valid.";
+                await _fixture.PagerDutyService.ResolveAlertAsync(
+                    headlessKey,
+                    resolveMessage
+                );
             }
             catch (Exception ex)
             {
