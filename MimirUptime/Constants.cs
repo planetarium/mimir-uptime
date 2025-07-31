@@ -32,6 +32,7 @@ namespace MimirUptime
             CollectionNames.GetCollectionName<AvatarDocument>(),
             CollectionNames.GetCollectionName<WorldInformationDocument>(),
             CollectionNames.GetCollectionName<AdventureCpDocument>(),
+            CollectionNames.GetCollectionName<BlockDocument>(),
         };
     }
 }
