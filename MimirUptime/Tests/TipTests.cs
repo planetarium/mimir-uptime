@@ -60,6 +60,7 @@ namespace MimirUptime.TipTests
                         $"Collection '{collectionName}' has a block difference of {blockDifference}. "
                             + $"Mimir block index: {blockIndexFromMimir}, Headless block index: {blockIndexFromHeadless}"
                     );
+                    throw new Exception("Test failed");
                 }
 
                 var resolveMessage =
