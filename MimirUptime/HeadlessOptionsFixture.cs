@@ -11,6 +11,7 @@ namespace MimirUptime
     {
         public IConfiguration Configuration { get; private set; }
         public IOptions<HeadlessOption> HeadlessOptions { get; private set; }
+        public IOptions<MimirOption> MimirOptions { get; private set; }
         public IOptions<PagerDutyOption> PagerDutyOptions { get; private set; }
         public PagerDutyService PagerDutyService { get; private set; }
 
@@ -25,6 +26,10 @@ namespace MimirUptime
             var headlessOptions = new HeadlessOption();
             Configuration.GetSection(HeadlessOption.SectionName).Bind(headlessOptions);
             HeadlessOptions = Microsoft.Extensions.Options.Options.Create(headlessOptions);
+
+            var mimirOptions = new MimirOption();
+            Configuration.GetSection(MimirOption.SectionName).Bind(mimirOptions);
+            MimirOptions = Microsoft.Extensions.Options.Options.Create(mimirOptions);
 
             var pagerDutyOptions = new PagerDutyOption();
             Configuration.GetSection(PagerDutyOption.SectionName).Bind(pagerDutyOptions);

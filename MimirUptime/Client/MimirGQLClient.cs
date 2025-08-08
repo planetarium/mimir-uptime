@@ -40,13 +40,32 @@ namespace MimirUptime.Client
 
         private readonly HttpClient _httpClient;
         private readonly Uri _url;
+        private readonly string? _issuer;
+        private readonly string? _secret;
 
-        public MimirGQLClient(Uri url)
+        public MimirGQLClient(Uri url, string? issuer = null, string? secret = null)
         {
             _httpClient = new HttpClient();
             _url = url;
+            _issuer = issuer;
+            _secret = secret;
 
             _httpClient.Timeout = TimeSpan.FromSeconds(5);
+        }
+
+        private string GenerateJwtToken(string secret, string issuer)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var expiration = DateTime.UtcNow.AddMinutes(5);
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                expires: expiration,
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         private async Task<(T response, string jsonResponse)> PostGraphQLRequestAsync<T>(
@@ -63,6 +82,15 @@ namespace MimirUptime.Client
             {
                 Content = content,
             };
+
+            if (_secret is not null && _issuer is not null)
+            {
+                var token = GenerateJwtToken(_secret, _issuer);
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue(
+                    "Bearer",
+                    token
+                );
+            }
 
             var response = await _httpClient.SendAsync(httpRequest, stoppingToken);
             response.EnsureSuccessStatusCode();

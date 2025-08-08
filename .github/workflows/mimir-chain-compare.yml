@@ -26,6 +26,8 @@ jobs:
         env:
           MimirUptime_Headless__JwtIssuer: ${{ secrets.JwtIssuer }}
           MimirUptime_Headless__JwtSecretKey: ${{ secrets.JwtSecretKey }}
+          MimirUptime_Mimir__JwtIssuer: ${{ secrets.MIMIR_JWT_ISSUER }}
+          MimirUptime_Mimir__JwtSecretKey: ${{ secrets.MIMIR_JWT_TOKEN }}
           MimirUptime_PagerDuty__Enabled: true
           MimirUptime_PagerDuty__RoutingKey: ${{ secrets.MimirRoutingKey }}
 

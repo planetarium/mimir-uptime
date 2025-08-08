@@ -37,13 +37,18 @@ namespace MimirUptime.TipTests
                 var mimirUrl = Constants.MIMIR_URLS[headlessKey];
 
                 var headlessOptions = _fixture.HeadlessOptions.Value;
+                var mimirOptions = _fixture.MimirOptions.Value;
 
                 var headlessClient = new HeadlessGQLClient(
                     new Uri(headlessUrl),
                     headlessOptions.JwtIssuer,
                     headlessOptions.JwtSecretKey
                 );
-                var mimirClient = new MimirGQLClient(new Uri(mimirUrl));
+                var mimirClient = new MimirGQLClient(
+                    new Uri(mimirUrl),
+                    mimirOptions.JwtIssuer,
+                    mimirOptions.JwtSecretKey
+                );
 
                 var (response, _) = await headlessClient.GetTipAsync();
                 var blockIndexFromHeadless = response.NodeStatus.Tip.Index;
