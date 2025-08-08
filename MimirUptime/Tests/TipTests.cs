@@ -50,29 +50,47 @@ namespace MimirUptime.TipTests
                     mimirOptions.JwtSecretKey
                 );
 
-                var (response, _) = await headlessClient.GetTipAsync();
-                var blockIndexFromHeadless = response.NodeStatus.Tip.Index;
-
-                foreach (var collectionName in Constants.COLLECTION_NAMES)
+                try
                 {
-                    var (metadataResponse, _) = await mimirClient.GetMetadataAsync(collectionName);
-                    var blockIndexFromMimir = metadataResponse.Metadata.latestBlockIndex;
+                    var (response, _) = await headlessClient.GetTipAsync();
+                    var blockIndexFromHeadless = response.NodeStatus.Tip.Index;
 
-                    var blockDifference = blockIndexFromHeadless - blockIndexFromMimir;
+                    foreach (var collectionName in Constants.COLLECTION_NAMES)
+                    {
+                        try
+                        {
+                            var (metadataResponse, _) = await mimirClient.GetMetadataAsync(collectionName);
+                            var blockIndexFromMimir = metadataResponse.Metadata.latestBlockIndex;
 
-                    Assert.True(
-                        blockDifference <= 50,
-                        $"Collection '{collectionName}' has a block difference of {blockDifference}. "
-                            + $"Mimir block index: {blockIndexFromMimir}, Headless block index: {blockIndexFromHeadless}"
+                            var blockDifference = blockIndexFromHeadless - blockIndexFromMimir;
+
+                            Assert.True(
+                                blockDifference <= 50,
+                                $"Collection '{collectionName}' has a block difference of {blockDifference}. "
+                                    + $"Mimir block index: {blockIndexFromMimir}, Headless block index: {blockIndexFromHeadless}"
+                            );
+                        }
+                        catch (HttpRequestException ex) when (ex.Message.Contains("429"))
+                        {
+                            return string.Empty;
+                        }
+                        catch (Exception ex)
+                        {
+                            return $"Error checking collection '{collectionName}': {ex.Message}";
+                        }
+                    }
+
+                    var resolveMessage =
+                        $"Block timestamp for {headlessKey} is now valid.";
+                    await _fixture.PagerDutyService.ResolveAlertAsync(
+                        headlessKey,
+                        resolveMessage
                     );
                 }
-
-                var resolveMessage =
-                    $"Block timestamp for {headlessKey} is now valid.";
-                await _fixture.PagerDutyService.ResolveAlertAsync(
-                    headlessKey,
-                    resolveMessage
-                );
+                catch (HttpRequestException ex)
+                {
+                    return $"Headless request error for {headlessKey}: {ex.Message}";
+                }
             }
             catch (Exception ex)
             {
